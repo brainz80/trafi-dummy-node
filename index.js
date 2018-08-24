@@ -201,12 +201,19 @@ if (responses) {
 			.sort.desc:after {
 				content: '\\f0dd';
 			}
+
+			.error {
+				color: red;
+			}
 		</style>
 		<title>Trafi dummy - Info</title>
 	</head>
 	<body>
 		<div id="list">
-			<input class="search" placeholder="Hae ...">
+			<form>
+				<input class="search" placeholder="Hae ...">
+			</form>
+
 			<table class="table table-striped">
 				<thead>
 					<tr>
@@ -224,7 +231,12 @@ if (responses) {
 				{{#each items}}
 					<tr>
 						<td class="id">{{ xmllink @key }}</td>
-						<td class="type">{{ type }}</td>
+						<td>
+							<span class="type">{{ type }}</span>
+							{{#with error}}
+								<span class="error" title="{{ virheselite }}">({{ virhekoodi }})</span>
+							{{/with}}
+						</td>
 						{{#with data}}
 							{{#with tunnus}}
 								<td>
@@ -280,8 +292,10 @@ if (responses) {
 			items: _.mapValues(ResultCollection.parsed, root => {
 				const historia = _.get(root, 'kehys.sanoma.ajoneuvontiedot.historia');
 				const laaja = _.get(root, 'kehys.sanoma.ajoneuvontiedot.laaja');
+				const virhe = _.get(root, 'kehys.yleinen.virhe');
 
 				return {
+					error: virhe,
 					type: laaja ? 'Laaja' : historia ? 'Historia' : '?',
 					data: laaja || historia,
 				}
