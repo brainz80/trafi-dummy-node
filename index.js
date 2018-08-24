@@ -280,13 +280,13 @@ if (responses) {
 								<td class="reg">--</td>
 								<td class="vin">--</td>
 							{{/with}}
-							<td class="date" data-timestamp="{{ajoneuvonPerustiedot.kayttoonottopvm}}">{{ date ajoneuvonPerustiedot.kayttoonottopvm }}</td>
+							<td class="date" data-kayttoonottopvm="{{ajoneuvonPerustiedot.kayttoonottopvm}}">{{ date ajoneuvonPerustiedot.kayttoonottopvm }}</td>
 							{{#with ajoneuvonTiedot}}
-								<td class="type" data-type="{{ajoneuvoluokka}}">{{ class2text ajoneuvoluokka }}</td>
+								<td class="type" data-ajoneuvoluokka="{{ajoneuvoluokka}}">{{ class2text ajoneuvoluokka }}</td>
 								<td class="make">{{ default merkkiSelvakielinen }}</td>
 								<td class="model">{{ default mallimerkinta }}</td>
 							{{else}}
-								<td class="type" data-type="null">--</td>
+								<td class="type" data-ajoneuvoluokka="null">--</td>
 								<td class="make">--</td>
 								<td class="model">--</td>
 							{{/with}}
@@ -305,8 +305,8 @@ if (responses) {
 					'type',
 					'reg',
 					'vin',
-					{ name: 'date', attr: 'data-timestamp' },
-					{ name: 'type', attr: 'data-type' },
+					{ name: 'date', attr: 'data-kayttoonottopvm' },
+					{ name: 'type', attr: 'data-ajoneuvoluokka' },
 					'make',
 					'model'
 				]
