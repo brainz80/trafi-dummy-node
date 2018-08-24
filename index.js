@@ -146,7 +146,7 @@ if (responses) {
 		});
 	});
 
-	app.get('/info', (req, res) => {
+	app.get('/report', (req, res) => {
 		res.set('Content-Type', 'text/html');
 
 		Handlebars.registerHelper('xmllink', file => {
