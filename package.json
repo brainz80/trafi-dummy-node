@@ -1,0 +1,20 @@
+{
+  "name": "trafi-dummy-node",
+  "version": "1.0.0",
+  "description": "Trafi dummy (nodejs version)",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "express": "^4.16.3",
+    "fast-xml-parser": "^3.12.0",
+    "handlebars": "^4.0.11",
+    "iconv-lite": "^0.4.24",
+    "lodash": "^4.17.10",
+    "moment": "^2.22.2"
+  }
+}
