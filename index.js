@@ -12,6 +12,26 @@ const path = require('path');
 const HOST = '0.0.0.0';
 const PORT = 8080;
 
+const class2text = {
+	'C1' : 'Traktori (telaketju)', 'C2' : 'Traktori (telaketju)', 'C3' : 'Traktori (telaketju)', 'C4' : 'Traktori (telaketju)', 'C5' : 'Traktori (telaketju)',
+	'KNP' : 'Kevyt nelipyörä',
+	'L1' : 'Mopo', 'L1e' : 'Mopo', 'L2' : 'Mopo (3 pyöräinen)', 'L2e' : 'Mopo (3 pyöräinen)',
+	'L3' : 'Moottoripyörä', 'L3e' : 'Moottoripyörä', 'L4' : 'Moottoripyörä', 'L4e' : 'Moottoripyörä',
+	'L5' : 'Kolmi- tai nelipyörä', 'L5e' : 'Kolmipyörä', 'L6e' : 'Kevyt nelipyörä', 'L7e' : 'Nelipyörä',
+	'M1' : 'Henkilöauto', 'M1G' : 'Henkilöauto',
+	'M2' : 'Linja-auto', 'M2G' : 'Linja-auto', 'M3' : 'Linja-auto', 'M3G' : 'Linja-auto',
+	'MA' : 'Maastoajoneuvo',
+	'MTK' : 'Moottorityökone',
+	'MUU' : 'Muu',
+	'N1' : 'Pakettiauto', 'N1G' : 'Pakettiauto',
+	'N2' : 'Kuorma-auto', 'N2G' : 'Kuorma-auto', 'N3' : 'Kuorma-auto', 'N3G' : 'Kuorma-auto',
+	'O1' : 'Kevyt perävaunu',
+	'O2' : 'Perävaunu', 'O3' : 'Perävaunu', 'O4' : 'Perävaunu',
+	'Ra1' : 'Traktorin perävaunu', 'Ra2' : 'Traktorin perävaunu', 'Ra3' : 'Traktorin perävaunu', 'Ra4' : 'Traktorin perävaunu', 'Rb1' : 'Traktorin perävaunu', 'Rb2' : 'Traktorin perävaunu', 'Rb3' : 'Traktorin perävaunu', 'Rb4' : 'Traktorin perävaunu',
+	'Sa1' : 'Vedettävä kone', 'Sa2' : 'Vedettävä kone', 'Sb1' : 'Vedettävä kone', 'Sb2' : 'Vedettävä kone',
+	'T' : 'Traktori', 'T1' : 'Traktori', 'T2' : 'Traktori', 'T3' : 'Traktori', 'T4' : 'Traktori', 'T5' : 'Traktori',
+};
+
 const ResultCollection = {
 	$laaja: 'kehys.sanoma.ajoneuvontiedot.laaja.tunnus',
 	$historia: 'kehys.sanoma.ajoneuvontiedot.historia.tunnus',
@@ -149,9 +169,12 @@ if (responses) {
 	app.get('/report', (req, res) => {
 		res.set('Content-Type', 'text/html');
 
-		Handlebars.registerHelper('xmllink', file => {
-			file = Handlebars.escapeExpression(file);
-			return new Handlebars.SafeString(`<a target="_blank" href="/xml/${file}">${file}</a>`);
+		Handlebars.registerHelper('class2text', value => {
+			if (value) {
+				return class2text[value] || value;
+			} else {
+				return Handlebars.helpers.default();
+			}
 		});
 		Handlebars.registerHelper('default', value => value || '--');
 		Handlebars.registerHelper ('date', value => {
@@ -164,6 +187,10 @@ if (responses) {
 			} else {
 				return Handlebars.helpers.default();
 			}
+		});
+		Handlebars.registerHelper('xmllink', file => {
+			file = Handlebars.escapeExpression(file);
+			return new Handlebars.SafeString(`<a target="_blank" href="/xml/${file}">${file}</a>`);
 		});
 
 		const template = Handlebars.compile(`<html>
@@ -255,7 +282,7 @@ if (responses) {
 							{{/with}}
 							<td class="date" data-timestamp="{{ajoneuvonPerustiedot.kayttoonottopvm}}">{{ date ajoneuvonPerustiedot.kayttoonottopvm }}</td>
 							{{#with ajoneuvonTiedot}}
-								<td class="type">{{ default ajoneuvoluokka }}</td>
+								<td class="type">{{ class2text ajoneuvoluokka }}</td>
 								<td class="make">{{ default merkkiSelvakielinen }}</td>
 								<td class="model">{{ default mallimerkinta }}</td>
 							{{else}}
