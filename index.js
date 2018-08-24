@@ -282,7 +282,7 @@ if (responses) {
 							{{/with}}
 							<td class="date" data-timestamp="{{ajoneuvonPerustiedot.kayttoonottopvm}}">{{ date ajoneuvonPerustiedot.kayttoonottopvm }}</td>
 							{{#with ajoneuvonTiedot}}
-								<td class="type">{{ class2text ajoneuvoluokka }}</td>
+								<td class="type" data-type="{{ajoneuvoluokka}}">{{ class2text ajoneuvoluokka }}</td>
 								<td class="make">{{ default merkkiSelvakielinen }}</td>
 								<td class="model">{{ default mallimerkinta }}</td>
 							{{else}}
@@ -306,7 +306,7 @@ if (responses) {
 					'reg',
 					'vin',
 					{ name: 'date', attr: 'data-timestamp' },
-					'type',
+					{ name: 'type', attr: 'data-type' },
 					'make',
 					'model'
 				]
