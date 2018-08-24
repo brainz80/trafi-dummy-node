@@ -188,7 +188,6 @@ if (responses) {
 				return Handlebars.helpers.default();
 			}
 		});
-		Handlebars.registerHelper('escape', value => Handlebars.escapeExpression(value));
 		Handlebars.registerHelper('xmllink', file => {
 			file = Handlebars.escapeExpression(file);
 			return new Handlebars.SafeString(`<a target="_blank" href="/xml/${file}">${file}</a>`);
@@ -283,11 +282,11 @@ if (responses) {
 							{{/with}}
 							<td class="date" data-timestamp="{{ajoneuvonPerustiedot.kayttoonottopvm}}">{{ date ajoneuvonPerustiedot.kayttoonottopvm }}</td>
 							{{#with ajoneuvonTiedot}}
-								<td class="type" data-type="{{escape ajoneuvoluokka}}">{{ class2text ajoneuvoluokka }}</td>
+								<td class="type" data-type="{{ajoneuvoluokka}}">{{ class2text ajoneuvoluokka }}</td>
 								<td class="make">{{ default merkkiSelvakielinen }}</td>
 								<td class="model">{{ default mallimerkinta }}</td>
 							{{else}}
-								<td class="type">--</td>
+								<td class="type" data-type="null">--</td>
 								<td class="make">--</td>
 								<td class="model">--</td>
 							{{/with}}
