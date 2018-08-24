@@ -286,7 +286,7 @@ if (responses) {
 								<td class="make">{{ default merkkiSelvakielinen }}</td>
 								<td class="model">{{ default mallimerkinta }}</td>
 							{{else}}
-								<td class="class" data-ajoneuvoluokka="null">--</td>
+								<td class="class">--</td>
 								<td class="make">--</td>
 								<td class="model">--</td>
 							{{/with}}
