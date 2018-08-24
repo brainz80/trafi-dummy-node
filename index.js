@@ -249,7 +249,7 @@ if (responses) {
 						<th class="sort" data-sort="reg">Rekisteritunnus</th>
 						<th class="sort" data-sort="vin">Valmistenumero</th>
 						<th class="sort" data-sort="date">Kayttöönottopäivä</th>
-						<th class="sort" data-sort="type">Ajoneuvoluokka</th>
+						<th class="sort" data-sort="class">Ajoneuvoluokka</th>
 						<th class="sort" data-sort="make">Merkki</th>
 						<th class="sort" data-sort="model">Malli ja merkintä</th>
 					</tr>
@@ -282,11 +282,11 @@ if (responses) {
 							{{/with}}
 							<td class="date" data-kayttoonottopvm="{{ajoneuvonPerustiedot.kayttoonottopvm}}">{{ date ajoneuvonPerustiedot.kayttoonottopvm }}</td>
 							{{#with ajoneuvonTiedot}}
-								<td class="type" data-ajoneuvoluokka="{{ajoneuvoluokka}}">{{ class2text ajoneuvoluokka }}</td>
+								<td class="class" data-ajoneuvoluokka="{{ajoneuvoluokka}}">{{ class2text ajoneuvoluokka }}</td>
 								<td class="make">{{ default merkkiSelvakielinen }}</td>
 								<td class="model">{{ default mallimerkinta }}</td>
 							{{else}}
-								<td class="type" data-ajoneuvoluokka="null">--</td>
+								<td class="class" data-ajoneuvoluokka="null">--</td>
 								<td class="make">--</td>
 								<td class="model">--</td>
 							{{/with}}
@@ -306,7 +306,7 @@ if (responses) {
 					'reg',
 					'vin',
 					{ name: 'date', attr: 'data-kayttoonottopvm' },
-					{ name: 'type', attr: 'data-ajoneuvoluokka' },
+					{ name: 'class', attr: 'data-ajoneuvoluokka' },
 					'make',
 					'model'
 				]
