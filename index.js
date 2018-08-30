@@ -156,17 +156,7 @@ if (responses) {
 		}
 	}
 
-	app.get('/xml/:name', (req, res) => {
-		res.sendFile(req.params.name, {
-			dotfiles: 'deny',
-			root: basePath,
-			headers: {
-				'Content-Type': 'application/xml; charset=ISO-8859-1',
-			}
-		});
-	});
-
-	app.get('/report', (req, res) => {
+	function getInfo (req, res) {
 		res.set('Content-Type', 'text/html');
 
 		Handlebars.registerHelper('class2text', value => {
@@ -328,10 +318,23 @@ if (responses) {
 				}
 			}),
 		}));
-	});
-
+	}
+	
 	app.post('/index.php', getResponse);
 	app.post('/', getResponse);
+
+	app.get('/report', getInfo);
+	app.post('/', getInfo);
+
+	app.get('/xml/:name', (req, res) => {
+		res.sendFile(req.params.name, {
+			dotfiles: 'deny',
+			root: basePath,
+			headers: {
+				'Content-Type': 'application/xml; charset=ISO-8859-1',
+			}
+		});
+	});
 
 	const server = http.createServer(app);
 

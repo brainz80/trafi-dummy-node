@@ -34,4 +34,4 @@ Example request-body:
 ## Valid endpoints:
 
 - `post` `/index.php` and `/` - query vehicle
-- `get` `/report` - display list of valid vehicles.
+- `get` `/report` and `/` - display list of valid vehicles.
