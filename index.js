@@ -1,6 +1,7 @@
 const _ = require('lodash');
 const bodyParser = require('body-parser');
 const parser = require('fast-xml-parser');
+const chokidar = require('chokidar');
 const iconv = require('iconv-lite');
 const express = require('express');
 const http = require('http');
