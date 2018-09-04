@@ -102,6 +102,22 @@ if (responses) {
 		});
 	});
 
+	app.get('/responses.json', (req, res) => {
+		const items = _.mapValues(ResultsCollector.parsed, root => {
+			const historia = _.get(root, 'kehys.sanoma.ajoneuvontiedot.historia');
+			const laaja = _.get(root, 'kehys.sanoma.ajoneuvontiedot.laaja');
+			const virhe = _.get(root, 'kehys.yleinen.virhe');
+
+			return {
+				error: virhe,
+				type: laaja ? 'Laaja' : historia ? 'Historia' : '?',
+				data: laaja || historia,
+			}
+		});
+
+		res.send(items);
+	});
+
 	app.get('/report', getReport);
 	app.get('/', getReport);
 
