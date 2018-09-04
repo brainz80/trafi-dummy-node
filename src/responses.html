@@ -5,7 +5,7 @@
 		<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.2.0/css/fontawesome.css" integrity="sha384-HbmWTHay9psM8qyzEKPc8odH4DsOuzdejtnr+OFtDmOcIVnhgReQ4GZBH7uwcjf6" crossorigin="anonymous">
 
 		<style type="text/css">
-			#list {
+			#app {
 				margin: 1em auto;
 				width: 80%;
 			}
@@ -41,81 +41,149 @@
 		<title>Trafi dummy - Info</title>
 	</head>
 	<body>
-		<div id="list">
+		<div id="app">
 			<form>
-				<input class="search" placeholder="Hae ...">
+				<input class="search" v-model="query" placeholder="Hae ...">
 			</form>
 
 			<table class="table table-striped">
 				<thead>
 					<tr>
-						<th class="sort" data-sort="id">Tiedosto</th>
-						<th class="sort" data-sort="type">Tyyppi</th>
-						<th class="sort" data-sort="reg">Rekisteritunnus</th>
-						<th class="sort" data-sort="vin">Valmistenumero</th>
-						<th class="sort" data-sort="date">Kayttöönottopäivä</th>
-						<th class="sort" data-sort="class">Ajoneuvoluokka</th>
-						<th class="sort" data-sort="make">Merkki</th>
-						<th class="sort" data-sort="model">Malli ja merkintä</th>
+						<th>Tiedosto</th>
+						<th>Tyyppi</th>
+						<th>Rekisteritunnus</th>
+						<th>Valmistenumero</th>
+						<th>Kayttöönottopäivä</th>
+						<th>Ajoneuvoluokka</th>
+						<th>Merkki</th>
+						<th>Malli ja merkintä</th>
 					</tr>
 				</thead>
 				<tbody class="list">
-				{{#each items}}
-					<tr>
-						<td class="id">{{ xmllink @key }}</td>
-						<td>
-							<span class="type">{{ type }}</span>
-							{{#with error}}
-								<span class="error" title="{{ virheselite }}">({{ virhekoodi }})</span>
-							{{/with}}
+					<tr v-for="(response, key) in sortedResults" :key="key">
+						<td class="id">
+							<a target="_blank" :href="'/xml/' + key">{{ key }}</a>
 						</td>
-						{{#with data}}
-							{{#with tunnus}}
+						<td>
+							<span class="type">{{ response.type }}</span>
+							<span v-if="response.error" class="error" :title="response.error.virheselite">({{ response.error.virhekoodi }})</span>
+						</td>
+						<template v-if="response.data">
+							<template v-if="response.data.tunnus">
 								<td>
-									{{#if rekisteritunnus}}
-										<span class="reg">{{ rekisteritunnus }}</span>
-									{{/if}}
-									{{#if edellinenRekisteritunnus}}
+									<span v-if="response.data.tunnus.rekisteritunnus" class="reg">{{ response.data.tunnus.rekisteritunnus }}</span>
+									<template v-if="response.data.tunnus.edellinenRekisteritunnus">
 										<i class="fa fa-arrow-left"></i>
-										<span class="reg">{{ edellinenRekisteritunnus }}</span>
-									{{/if}}
+										<span class="reg">{{ response.data.tunnus.edellinenRekisteritunnus }}</span>
+									</template>
 								</td>
-								<td class="vin">{{ default valmistenumero }}</td>
-							{{else}}
+								<td class="vin">{{ response.data.tunnus.valmistenumero }}</td>
+							</template>
+							<template v-else>
 								<td class="reg">--</td>
 								<td class="vin">--</td>
-							{{/with}}
-							<td class="date" data-kayttoonottopvm="{{ajoneuvonPerustiedot.kayttoonottopvm}}">{{ date ajoneuvonPerustiedot.kayttoonottopvm }}</td>
-							{{#with ajoneuvonTiedot}}
-								<td class="class" data-ajoneuvoluokka="{{ajoneuvoluokka}}">{{ class2text ajoneuvoluokka }}</td>
-								<td class="make">{{ default merkkiSelvakielinen }}</td>
-								<td class="model">{{ default mallimerkinta }}</td>
-							{{else}}
+							</template>
+							<td v-if="response.data.ajoneuvonPerustiedot" class="date">
+								<moment :date="response.data.ajoneuvonPerustiedot.kayttoonottopvm"></moment>
+							</td>
+							<td class="date" v-else>--</td>
+							<template v-if="response.data.ajoneuvonTiedot">
+								<td class="class">{{ response.data.ajoneuvonTiedot.ajoneuvoluokka }}</td>
+								<td class="make">{{ response.data.ajoneuvonTiedot.merkkiSelvakielinen }}</td>
+								<td class="model">{{ response.data.ajoneuvonTiedot.mallimerkinta }}</td>
+							</template>
+							<template v-else>
 								<td class="class">--</td>
 								<td class="make">--</td>
 								<td class="model">--</td>
-							{{/with}}
-						{{/with}}
+							</template>
+						</template>
 					</tr>
-				{{/each}}
 				</tbody>
 			</table>
 		</div>
 
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/list.js/1.5.0/list.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.17/vue.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/vue-resource/1.5.1/vue-resource.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.10/lodash.min.js"></script>
 		<script>
-			new List('list', {
-				valueNames: [
-					'id',
-					'type',
-					'reg',
-					'vin',
-					{ name: 'date', attr: 'data-kayttoonottopvm' },
-					{ name: 'class', attr: 'data-ajoneuvoluokka' },
-					'make',
-					'model'
-				]
-			});
+			new Vue({
+				el: '#app',
+				data: {
+					query: '', 
+					responses: {},
+				},
+				components: {
+					'moment': {
+						props: ['date'],
+						template: '<span class="moment">\
+							<span class="moment__date">{{ moment_date }}</span>\
+							<span class="text-muted moment__fromnow" v-if="moment_fromnow">({{ moment_fromnow }})</span>\
+						</span>',
+						data: function () {
+							return {
+								moment_date: null,
+								moment_fromnow: null,
+							}
+						},
+						mounted: function () {
+							if (this.date) {
+								this.$options.interval = setInterval(this.updateDate, 1000);
+								this.updateDate();
+							}
+						},
+						beforeDestroy: function () {
+							var interval;
+							if (interval = this.$options.interval) {
+								clearInterval(interval);
+							}
+						},
+						methods: {
+							updateDate: function () {
+								this.initMoment(this.date);
+							},
+
+							initMoment: function (date) {
+								var m = moment(date, 'YYYYMMDD');
+
+								if (m.isValid()) {
+									this.moment_date = m.format('DD.MM.YYYY');
+									this.moment_fromnow = m.fromNow();
+								} else if (date) {
+									this.initMoment(String.prototype.substring.call(date, 0, 4) + '0101');
+								} else {
+									this.moment_date = '--';
+								}
+							}
+						}
+					}
+				},
+				computed: {
+					sortedResults: function () {
+						var responses = this.responses, query = _.toLower(this.query);
+
+						if (query === '') return responses;
+
+						return _.pickBy(responses, function (response) {
+							var values = _.reduce(response, function reduce (result, value) {
+								if (_.isObjectLike(value)) {
+									return _.reduce(value, reduce, result);
+								}
+
+								return result += value;
+							}, '');
+
+							return _(values).toLower().indexOf(query) !== -1;
+						});
+					}
+				},
+				mounted: function () {
+					this.$http.get('/responses.json').then(function (resp) {
+						if (resp.ok) this.responses = resp.body;
+					});
+				}
+			})
 		</script>
 	</body>
 </html>

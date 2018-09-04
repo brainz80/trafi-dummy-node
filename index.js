@@ -53,6 +53,7 @@ if (responses) {
 	}));
 
 	function getReport (req, res) {
+		res.set('Content-Type', 'text/html').sendFile(path.resolve('./src/responses.html'));
 	}
 
 	function getResponse (req, res) {
