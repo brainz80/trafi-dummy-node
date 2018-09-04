@@ -1,13 +1,11 @@
 const _ = require('lodash');
 const bodyParser = require('body-parser');
-const express = require('express');
-const fs = require('fs');
-const Handlebars = require('handlebars');
-const http = require('http');
-const iconv = require('iconv-lite');
-const moment = require('moment');
 const parser = require('fast-xml-parser');
+const iconv = require('iconv-lite');
+const express = require('express');
+const http = require('http');
 const path = require('path');
+const fs = require('fs');
 
 const HOST = '0.0.0.0';
 const PORT = 8080;
@@ -55,47 +53,6 @@ if (responses) {
 	}));
 
 	function getReport (req, res) {
-		res.set('Content-Type', 'text/html');
-
-		Handlebars.registerHelper('class2text', value => {
-			if (value) {
-				return class2text[value] || value;
-			} else {
-				return Handlebars.helpers.default();
-			}
-		});
-		Handlebars.registerHelper('default', value => value || '--');
-		Handlebars.registerHelper ('date', value => {
-			const m = moment(value, 'YYYYMMDD');
-			if (m.isValid()) {
-				return new Handlebars.SafeString(`<span>${ m.format('DD.MM.YYYY') } (${ m.fromNow() })</span>`);
-			} else if (value) {
-				const year = String.prototype.substring.call(value, 0, 4);
-				return Handlebars.helpers.date(`${year}0101`);
-			} else {
-				return Handlebars.helpers.default();
-			}
-		});
-		Handlebars.registerHelper('xmllink', file => {
-			file = Handlebars.escapeExpression(file);
-			return new Handlebars.SafeString(`<a target="_blank" href="/xml/${file}">${file}</a>`);
-		});
-
-		const template = Handlebars.compile( fs.readFileSync('./src/responses.html', 'utf8') );
-
-		res.end(template({
-			items: _.mapValues(ResultsCollector.parsed, root => {
-				const historia = _.get(root, 'kehys.sanoma.ajoneuvontiedot.historia');
-				const laaja = _.get(root, 'kehys.sanoma.ajoneuvontiedot.laaja');
-				const virhe = _.get(root, 'kehys.yleinen.virhe');
-
-				return {
-					error: virhe,
-					type: laaja ? 'Laaja' : historia ? 'Historia' : '?',
-					data: laaja || historia,
-				}
-			}),
-		}));
 	}
 
 	function getResponse (req, res) {
