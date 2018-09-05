@@ -75,7 +75,7 @@
 				el: '#app',
 				data: {
 					class2text: {},
-					columns: ['id', 'type', 'data.reg', 'data.prev_reg', 'data.vin', 'data.first_usage', 'data.type', 'data.make', 'data.model'],
+					columns: ['id', 'type', 'data.reg', 'data.prev_reg', 'data.remote_reg', 'data.vin', 'data.first_usage', 'data.type', 'data.make', 'data.model'],
 					options: {
 						headings: {
 							'id'				: 'Tiedosto',
@@ -157,6 +157,7 @@
 								data: {
 									'reg': _.get(response.data, 'tunnus.rekisteritunnus'),
 									'prev_reg': _.get(response.data, 'tunnus.edellinenRekisteritunnus'),
+									'remote_reg': _.get(response.data, 'ajoneuvonPerustiedot.ulkomainenRekisteritunnus'),
 									'vin': _.get(response.data, 'tunnus.valmistenumero'),
 									'first_usage': _.get(response.data, 'ajoneuvonPerustiedot.kayttoonottopvm'),
 									'type': vehicleClass,
