@@ -26,15 +26,7 @@ class ResultsCollector {
 		let index = _.findKey(this.parsed, [`${AJONEUVONTIEDOT_LAAJA}.rekisteritunnus`, value]);
 
 		if (_.isUndefined(index)) {
-			index = _.findKey(this.parsed, [`${AJONEUVONTIEDOT_LAAJA}.edellinenRekisteritunnus`, value]);
-		}
-
-		if (_.isUndefined(index)) {
 			index = _.findKey(this.parsed, [`${AJONEUVONTIEDOT_HISTORIA}.rekisteritunnus`, value]);
-		}
-
-		if (_.isUndefined(index)) {
-			index = _.findKey(this.parsed, [`${AJONEUVONTIEDOT_HISTORIA}.edellinenRekisteritunnus`, value]);
 		}
 
 		return raw ? this.items[index] : this.parsed[index];
