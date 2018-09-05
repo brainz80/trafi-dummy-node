@@ -1,6 +1,6 @@
 <html>
 	<head>
-		<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.3/css/bootstrap.min.css">
+		<link href="https://stackpath.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 		<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.2.0/css/solid.css" integrity="sha384-wnAC7ln+XN0UKdcPvJvtqIH3jOjs9pnKnq9qX68ImXvOGz2JuFoEiCjT8jyZQX2z" crossorigin="anonymous">
 		<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.2.0/css/fontawesome.css" integrity="sha384-HbmWTHay9psM8qyzEKPc8odH4DsOuzdejtnr+OFtDmOcIVnhgReQ4GZBH7uwcjf6" crossorigin="anonymous">
 
@@ -10,116 +10,92 @@
 				width: 80%;
 			}
 
-			.table td, .table th {
+			.VueTables__table th, .VueTables__table td {
 				white-space: nowrap;
 			}
 
-			.table th {
-				background-color: #fff;
-				position: sticky;
-				top: 0;
-				z-index: 10;
+			.VueTables__sort-icon.pull-right {
+				float: none !important;
+				margin-left: 1em;
 			}
 
-			.sort:after {
-				font-family: "Font Awesome 5 Free";
-				font-weight: 900;
-				margin-left: 1em;
-				content: '';
-			}
-			.sort.asc:after {
-				content: '\\f0de';
-			}
-			.sort.desc:after {
-				content: '\\f0dd';
+			.form-group label {
+				margin-right: 1em;
 			}
 
 			.error {
 				color: red;
 			}
+
+			[v-cloak] > * {
+				display: none;
+			}
+
+			[v-cloak]:before {
+				content: 'Loading ...';
+			}
 		</style>
 		<title>Trafi dummy - Info</title>
 	</head>
 	<body>
-		<div id="app">
-			<form>
-				<input class="search" v-model="query" placeholder="Hae ...">
-			</form>
-
-			<table class="table table-striped">
-				<thead>
-					<tr>
-						<th>Tiedosto</th>
-						<th>Tyyppi</th>
-						<th>Rekisteritunnus</th>
-						<th>Valmistenumero</th>
-						<th>Kayttöönottopäivä</th>
-						<th>Ajoneuvoluokka</th>
-						<th>Merkki</th>
-						<th>Malli ja merkintä</th>
-					</tr>
-				</thead>
-				<tbody class="list">
-					<tr v-for="(response, key) in sortedResults" :key="key">
-						<td class="id">
-							<a target="_blank" :href="'/xml/' + key">{{ key }}</a>
-						</td>
-						<td>
-							<span class="type">{{ response.type }}</span>
-							<span v-if="response.error" class="error" :title="response.error.virheselite">({{ response.error.virhekoodi }})</span>
-						</td>
-						<template v-if="response.data">
-							<template v-if="response.data.tunnus">
-								<td>
-									<span v-if="response.data.tunnus.rekisteritunnus" class="reg">{{ response.data.tunnus.rekisteritunnus }}</span>
-									<template v-if="response.data.tunnus.edellinenRekisteritunnus">
-										<i class="fa fa-arrow-left"></i>
-										<span class="reg">{{ response.data.tunnus.edellinenRekisteritunnus }}</span>
-									</template>
-								</td>
-								<td class="vin">{{ response.data.tunnus.valmistenumero }}</td>
-							</template>
-							<template v-else>
-								<td class="reg">--</td>
-								<td class="vin">--</td>
-							</template>
-							<td v-if="response.data.ajoneuvonPerustiedot" class="date">
-								<moment :date="response.data.ajoneuvonPerustiedot.kayttoonottopvm"></moment>
-							</td>
-							<td class="date" v-else>--</td>
-							<template v-if="response.data.ajoneuvonTiedot">
-								<td class="class">{{ response.data.ajoneuvonTiedot.ajoneuvoluokka }}</td>
-								<td class="make">{{ response.data.ajoneuvonTiedot.merkkiSelvakielinen }}</td>
-								<td class="model">{{ response.data.ajoneuvonTiedot.mallimerkinta }}</td>
-							</template>
-							<template v-else>
-								<td class="class">--</td>
-								<td class="make">--</td>
-								<td class="model">--</td>
-							</template>
-						</template>
-					</tr>
-				</tbody>
-			</table>
+		<div id="app" v-cloak>
+			<v-client-table :data="responses" :columns="columns" :options="options">
+				<template slot="type" slot-scope="props">
+					<span>{{props.row.type}}</span>
+					<span class="text-danger" v-if="props.row.error" :title="props.row.error.virheselite">({{props.row.error.virhekoodi}})</span>
+				</template>
+				<template slot="data.first_usage" slot-scope="props">
+					<moment :date="props.row.data.first_usage"></moment>
+				</template>
+			</v-client-table>
 		</div>
 
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.17/vue.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/vue-resource/1.5.1/vue-resource.min.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.10/lodash.min.js"></script>
+
+		<script src="https://cdn.jsdelivr.net/npm/vue-tables-2@1.4.64/dist/vue-tables-2.min.js"></script>
+
 		<script>
+			Vue.use(VueTables.ClientTable, {
+				footerHeadings: true,
+				sortIcon: {
+					'base'				: 'fa',
+					'up'				: 'fa-sort-up',
+					'down'				: 'fa-sort-down',
+					'is'				: 'fa-sort'
+				},
+			}, false, 'bootstrap3');
+
 			new Vue({
 				el: '#app',
 				data: {
+					class2text: {},
+					columns: ['id', 'type', 'data.reg', 'data.prev_reg', 'data.vin', 'data.first_usage', 'data.type', 'data.make', 'data.model'],
+					options: {
+						headings: {
+							'id'				: 'Tiedosto',
+							'type'				: 'Tyyppi',
+							'data.reg'			: 'Rekisteritunnus',
+							'data.prev_reg'		: 'Edellinen rekisteritunnus',
+							'data.vin'			: 'Valmistenumero',
+							'data.first_usage'	: 'Kayttöönottopäivä',
+							'data.type'			: 'Ajoneuvoluokka',
+							'data.make'			: 'Merkki',
+							'data.model'		: 'Malli ja merkintä',
+						},
+					},
+					raw_responses: {},
+					loading: true,
 					query: '', 
-					responses: {},
 				},
 				components: {
 					'moment': {
 						props: ['date'],
 						template: '<span class="moment">\
-							<span class="moment__date">{{ moment_date }}</span>\
-							<span class="text-muted moment__fromnow" v-if="moment_fromnow">({{ moment_fromnow }})</span>\
+							<div class="moment__date">{{ moment_date }}</div>\
+							<div class="text-muted small moment__fromnow" v-if="moment_fromnow">({{ moment_fromnow }})</div>\
 						</span>',
 						data: function () {
 							return {
@@ -153,34 +129,69 @@
 								} else if (date) {
 									this.initMoment(String.prototype.substring.call(date, 0, 4) + '0101');
 								} else {
-									this.moment_date = '--';
+									this.moment_date = null;
+									this.moment_fromnow = null;
 								}
 							}
 						}
 					}
 				},
 				computed: {
-					sortedResults: function () {
-						var responses = this.responses, query = _.toLower(this.query);
+					responses: function () {
+						var parent = this;
 
-						if (query === '') return responses;
+						return _.map(parent.raw_responses, function (response, key) {
+							var vehicleClass = _.get(response.data, 'ajoneuvonTiedot.ajoneuvoluokka');
 
-						return _.pickBy(responses, function (response) {
-							var values = _.reduce(response, function reduce (result, value) {
-								if (_.isObjectLike(value)) {
-									return _.reduce(value, reduce, result);
-								}
+							if (vehicleClass) {
+								vehicleClass = _.get(parent.class2text, vehicleClass, vehicleClass);
+							}
 
-								return result += value;
-							}, '');
-
-							return _(values).toLower().indexOf(query) !== -1;
+							return {
+								id: key,
+								error: response.error,
+								type: response.type,
+								data: {
+									'reg': _.get(response.data, 'tunnus.rekisteritunnus'),
+									'prev_reg': _.get(response.data, 'tunnus.edellinenRekisteritunnus'),
+									'vin': _.get(response.data, 'tunnus.valmistenumero'),
+									'first_usage': _.get(response.data, 'ajoneuvonPerustiedot.kayttoonottopvm'),
+									'type': vehicleClass,
+									'make': _.get(response.data, 'ajoneuvonTiedot.merkkiSelvakielinen'),
+									'model': _.get(response.data, 'ajoneuvonTiedot.mallimerkinta'),
+								},
+							};
 						});
 					}
 				},
 				mounted: function () {
-					this.$http.get('/responses.json').then(function (resp) {
-						if (resp.ok) this.responses = resp.body;
+					var parent = this;
+
+					var es = new EventSource('/event/responses');
+
+					es.addEventListener('add-response', function (event) {
+						var response = JSON.parse(event.data);
+						Vue.set(parent.raw_responses, response.key, response.value);
+						parent.$forceUpdate();
+					});
+
+					es.addEventListener('remove-response', function (event) {
+						var response = JSON.parse(event.data);
+						Vue.delete(parent.raw_responses, response);
+						parent.$forceUpdate();
+					});
+
+					parent.$http.get('/data.json').then(function (resp) {
+						var body;
+
+						if (resp.ok) {
+							if (body = resp.body) {
+								parent.raw_responses = body.responses;
+								parent.class2text = body.class2text;
+							}
+						}
+
+						parent.loading = false;
 					});
 				}
 			})
