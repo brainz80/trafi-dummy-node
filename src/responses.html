@@ -40,6 +40,9 @@
 	<body>
 		<div id="app" v-cloak>
 			<v-client-table :data="responses" :columns="columns" :options="options">
+				<template slot="id" slot-scope="props">
+					<a target="_blank" :href="'/xml/' + props.row.id">{{props.row.id}}</a>
+				</template>
 				<template slot="type" slot-scope="props">
 					<span>{{props.row.type}}</span>
 					<span class="text-danger" v-if="props.row.error" :title="props.row.error.virheselite">({{props.row.error.virhekoodi}})</span>
