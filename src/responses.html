@@ -40,15 +40,14 @@
 	<body>
 		<div id="app" v-cloak>
 			<v-client-table :data="responses" :columns="columns" :options="options">
-				<template slot="id" slot-scope="props">
-					<a target="_blank" :href="'/xml/' + props.row.id">{{props.row.id}}</a>
-				</template>
-				<template slot="type" slot-scope="props">
-					<span>{{props.row.type}}</span>
-					<span class="text-danger" v-if="props.row.error" :title="props.row.error.virheselite">({{props.row.error.virhekoodi}})</span>
-				</template>
-				<template slot="data.first_usage" slot-scope="props">
-					<moment :date="props.row.data.first_usage"></moment>
+				<a slot="response_id" slot-scope="props" target="_blank" :href="'/xml/' + props.row.response_id">{{props.row.response_id}}</a>
+				<moment slot="data_first_usage" slot-scope="props" :date="props.row.data_first_usage"></moment>
+				<template slot="data_type" slot-scope="props">{{class2text[props.row.data_type]}}</template>
+				<template slot="response_type" slot-scope="props">
+					<span>{{props.row.response_type}}</span>
+					<span class="text-danger" v-if="props.row.response_error.status" :title="props.row.response_error.description">
+						({{props.row.response_error.status}})
+					</span>
 				</template>
 			</v-client-table>
 		</div>
@@ -75,19 +74,20 @@
 				el: '#app',
 				data: {
 					class2text: {},
-					columns: ['id', 'type', 'data.reg', 'data.prev_reg', 'data.remote_reg', 'data.vin', 'data.first_usage', 'data.type', 'data.make', 'data.model'],
+					columns: ['response_id', 'response_type', 'data_reg', 'data_prev_reg', 'data_remote_reg', 'data_vin', 'data_first_usage', 'data_type', 'data_make', 'data_model'],
 					options: {
+						perPage: 100,
 						headings: {
-							'id'				: 'Tiedosto',
-							'type'				: 'Tyyppi',
-							'data.reg'			: 'Rek.',
-							'data.prev_reg'		: 'Rek. (ed.)',
-							'data.remote_reg'	: 'Rek. (ulk.)',
-							'data.vin'			: 'Valmistenumero',
-							'data.first_usage'	: 'Kayttöönottopäivä',
-							'data.type'			: 'Ajoneuvoluokka',
-							'data.make'			: 'Merkki',
-							'data.model'		: 'Malli ja merkintä',
+							'response_id'		: 'Tiedosto',
+							'response_type'		: 'Tyyppi',
+							'data_reg'			: 'Rek.',
+							'data_prev_reg'		: 'Rek. (ed.)',
+							'data_remote_reg'	: 'Rek. (ulk.)',
+							'data_vin'			: 'Valmistenumero',
+							'data_first_usage'	: 'Kayttöönottopäivä',
+							'data_type'			: 'Ajoneuvoluokka',
+							'data_make'			: 'Merkki',
+							'data_model'		: 'Malli ja merkintä',
 						},
 					},
 					raw_responses: {},
@@ -97,74 +97,59 @@
 				components: {
 					'moment': {
 						props: ['date'],
-						template: '<span class="moment">\
-							<div class="moment__date">{{ moment_date }}</div>\
-							<div class="text-muted small moment__fromnow" v-if="moment_fromnow">({{ moment_fromnow }})</div>\
+						template: '<span class="moment" v-if="moment && moment.isValid()">\
+							<div class="moment__date">{{ moment.format(\'DD.MM.YYYY\') }}</div>\
+							<div class="text-muted small moment__fromnow">{{ moment.fromNow() }}</div>\
 						</span>',
 						data: function () {
 							return {
-								moment_date: null,
-								moment_fromnow: null,
+								moment: null,
 							}
 						},
-						mounted: function () {
-							if (this.date) {
-								this.$options.interval = setInterval(this.updateDate, 1000);
-								this.updateDate();
-							}
-						},
-						beforeDestroy: function () {
-							var interval;
-							if (interval = this.$options.interval) {
-								clearInterval(interval);
+						watch: {
+							'date': function (val, oldval) {
+								if (val !== oldval) this.updateMoment(val);
 							}
 						},
 						methods: {
-							updateDate: function () {
-								this.initMoment(this.date);
-							},
+							updateMoment: function (date) {
+								this.moment = moment(date, 'YYYYMMDD');
 
-							initMoment: function (date) {
-								var m = moment(date, 'YYYYMMDD');
-
-								if (m.isValid()) {
-									this.moment_date = m.format('DD.MM.YYYY');
-									this.moment_fromnow = m.fromNow();
-								} else if (date) {
-									this.initMoment(String.prototype.substring.call(date, 0, 4) + '0101');
-								} else {
-									this.moment_date = null;
-									this.moment_fromnow = null;
+								if (!this.moment.isValid()) {
+									this.moment = moment(date, 'YYYY0101');
 								}
 							}
-						}
+						},
+
+						beforeDestroy: function () {
+							this.moment = null;
+						},
+						mounted: function () {
+							this.updateMoment(this.date);
+						},
 					}
 				},
 				computed: {
 					responses: function () {
-						var parent = this;
-
-						return _.map(parent.raw_responses, function (response, key) {
-							var vehicleClass = _.get(response.data, 'ajoneuvonTiedot.ajoneuvoluokka');
-
-							if (vehicleClass) {
-								vehicleClass = _.get(parent.class2text, vehicleClass, vehicleClass);
-							}
+						return _.map(this.raw_responses, function (response, key) {
+							var getError = _.partial(_.get, response.error, _);
+							var getData = _.partial(_.get, response.data, _);
 
 							return {
-								id: key,
-								error: response.error,
-								type: response.type,
-								data: {
-									'reg': _.get(response.data, 'tunnus.rekisteritunnus'),
-									'prev_reg': _.get(response.data, 'tunnus.edellinenRekisteritunnus'),
-									'remote_reg': _.get(response.data, 'ajoneuvonPerustiedot.ulkomainenRekisteritunnus'),
-									'vin': _.get(response.data, 'tunnus.valmistenumero'),
-									'first_usage': _.get(response.data, 'ajoneuvonPerustiedot.kayttoonottopvm'),
-									'type': vehicleClass,
-									'make': _.get(response.data, 'ajoneuvonTiedot.merkkiSelvakielinen'),
-									'model': _.get(response.data, 'ajoneuvonTiedot.mallimerkinta'),
+								'response_id': key,
+								'response_error': {
+									description: getError('virheselite'),
+									status: getError('virhekoodi'),
 								},
+								'response_type': response.type,
+								'data_reg': getData('tunnus.rekisteritunnus'),
+								'data_prev_reg': getData('tunnus.edellinenRekisteritunnus'),
+								'data_remote_reg': getData('ajoneuvonPerustiedot.ulkomainenRekisteritunnus'),
+								'data_vin': getData('tunnus.valmistenumero'),
+								'data_first_usage': getData('ajoneuvonPerustiedot.kayttoonottopvm'),
+								'data_type': getData('ajoneuvonTiedot.ajoneuvoluokka'),
+								'data_make': getData('ajoneuvonTiedot.merkkiSelvakielinen'),
+								'data_model': getData('ajoneuvonTiedot.mallimerkinta'),
 							};
 						});
 					}
