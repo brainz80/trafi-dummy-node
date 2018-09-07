@@ -13,13 +13,14 @@
 				white-space: nowrap;
 			}
 
+			.VueTables__columns-dropdown, 
+			.form-group label {
+				margin-right: 1em;
+			}
+
 			.VueTables__sort-icon.pull-right {
 				float: none !important;
 				margin-left: 1em;
-			}
-
-			.form-group label {
-				margin-right: 1em;
 			}
 
 			[v-cloak] > * {
@@ -71,7 +72,7 @@
 					class2text: {},
 					columns: ['response_id', 'response_type', 'data_reg', 'data_prev_reg', 'data_remote_reg', 'data_vin', 'data_first_usage', 'data_type', 'data_make', 'data_model'],
 					options: {
-						perPage: 100,
+						columnsDropdown: true,
 						headings: {
 							'response_id'		: 'Tiedosto',
 							'response_type'		: 'Tyyppi',
@@ -84,6 +85,7 @@
 							'data_make'			: 'Merkki',
 							'data_model'		: 'Malli ja merkintä',
 						},
+						perPage: 100,
 					},
 					raw_responses: {},
 					loading: true,
