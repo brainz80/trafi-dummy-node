@@ -1,4 +1,4 @@
-FROM node:8
+FROM node:10
 
 # Create app directories
 RUN mkdir -p /usr/src/app/responses
