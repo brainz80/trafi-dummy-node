@@ -1,6 +1,6 @@
 {
   "name": "trafi-dummy-node",
-  "version": "2.3.8",
+  "version": "2.4.0",
   "description": "Trafi dummy (nodejs version)",
   "main": "index.js",
   "scripts": {
