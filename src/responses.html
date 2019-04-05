@@ -1,10 +1,14 @@
 <html>
 	<head>
-		<link href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">
+		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">
 		<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/solid.css" integrity="sha384-QokYePQSOwpBDuhlHOsX0ymF6R/vLk/UQVz3WHa6wygxI5oGTmDTv8wahFOSspdm" crossorigin="anonymous">
 		<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/fontawesome.css" integrity="sha384-vd1e11sR28tEK9YANUtpIOdjGW14pS87bUBuOIoBILVWLFnS+MCX9T6MMf0VdPGq" crossorigin="anonymous">
 
 		<style type="text/css">
+			.container {
+				width: 100%;
+			}
+
 			.VueTables .row {
 				margin: 1em 0;
 			}
@@ -23,37 +27,64 @@
 				margin-left: 1em;
 			}
 
-			[v-cloak] > * {
+			[v-cloak], .loading {
 				display: none;
 			}
 
-			[v-cloak]:before {
-				content: 'Loading ...';
+			[v-cloak] + .loading {
+				display: block;
+			}
+
+			.loading {
+				font-size: 32px;
+			}
+
+			.copy-to-clipboard {
+				cursor: pointer;
+				cursor: copy;
+			}
+
+			.fade-enter-active, .fade-leave-active {
+				transition: opacity .5s;
+			}
+			.fade-enter, .fade-leave-to {
+				opacity: 0;
 			}
 		</style>
 		<title>Trafi dummy - Info</title>
 	</head>
 	<body>
-		<div id="app" v-cloak>
-			<v-client-table :data="responses" :columns="columns" :options="options">
-				<a slot="response_id" slot-scope="props" target="_blank" :href="'/xml/' + props.row.response_id">{{props.row.response_id}}</a>
-				<moment slot="data_first_usage" slot-scope="props" :date="props.row.data_first_usage"></moment>
-				<template slot="data_type" slot-scope="props">{{class2text[props.row.data_type]}}</template>
-				<template slot="response_type" slot-scope="props">
-					<span>{{props.row.response_type}}</span>
-					<span class="text-danger" v-if="props.row.response_error.status" :title="props.row.response_error.description">
-						({{props.row.response_error.status}})
-					</span>
-				</template>
-			</v-client-table>
+		<div class="container">
+			<div id="app" v-cloak>
+				<notice ref="notice" class="alert"></notice>
+
+				<v-client-table :data="responses" :columns="columns" :options="options">
+					<a slot="response_id" slot-scope="props" target="_blank" :href="'/xml/' + props.row.response_id">{{props.row.response_id}}</a>
+					<clipboard :value="props.row.data_reg" slot="data_reg" slot-scope="props"></clipboard>
+					<clipboard :value="props.row.data_prev_reg" slot="data_prev_reg" slot-scope="props"></clipboard>
+					<clipboard :value="props.row.data_remote_reg" slot="data_remote_reg" slot-scope="props"></clipboard>
+					<clipboard :value="props.row.data_vin" slot="data_vin" slot-scope="props"></clipboard>
+					<moment slot="data_first_usage" slot-scope="props" :date="props.row.data_first_usage"></moment>
+					<template slot="data_type" slot-scope="props">{{class2text[props.row.data_type]}}</template>
+					<template slot="response_type" slot-scope="props">
+						<span>{{props.row.response_type}}</span>
+						<span class="text-danger" v-if="props.row.response_error.status" :title="props.row.response_error.description">
+							({{props.row.response_error.status}})
+						</span>
+					</template>
+				</v-client-table>
+			</div>
+
+			<div class="loading">Ladataan ...</div>
 		</div>
+		
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.min.js" integrity="sha256-chlNFSVx3TdcQ2Xlw7SvnbLAavAQLO0Y/LBiWX04viY=" crossorigin="anonymous"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/vue-resource/1.5.1/vue-resource.js" integrity="sha256-65r7bET363amdMrrizpE4H+N9OWh/aDrLWq2UWoqxlg=" crossorigin="anonymous"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js" integrity="sha256-4iQZ6BVL4qNKlQ27TExEhBN1HFPvAvAMbFavKKosSWQ=" crossorigin="anonymous"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.11/lodash.min.js" integrity="sha256-7/yoZS3548fXSRXqc/xYzjsmuW3sFKzuvOCHd06Pmps=" crossorigin="anonymous"></script>
 
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.min.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/vue-resource/1.5.1/vue-resource.min.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.11/lodash.min.js"></script>
-
-		<script src="https://cdn.jsdelivr.net/npm/vue-tables-2@1.4.70/dist/vue-tables-2.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/vue-tables-2@1.4.70/dist/vue-tables-2.min.js" integrity="sha256-DVmgriNEDY04eRA8XfMq46kvAbSHecwl6KEN1Y3nG4s=" crossorigin="anonymous"></script>
+		<script src="https://cdn.jsdelivr.net/npm/vue-clipboards@1.2.4/dist/vue-clipboards.js" integrity="sha256-vsA5uaKwgmsjU0bHubNzV/TL6oluqv3CqGX/XkmuYIs=" crossorigin="anonymous"></script>
 
 		<script>
 			Vue.use(VueTables.ClientTable, {
@@ -65,6 +96,8 @@
 					'is'				: 'fa-sort'
 				},
 			}, false, 'bootstrap3');
+
+			Vue.use(vueClipboards);
 
 			new Vue({
 				el: '#app',
@@ -92,24 +125,80 @@
 					query: '', 
 				},
 				components: {
+					'clipboard': {
+						template: `<a class="copy-to-clipboard" @success="copySuccess" @error="copyError" v-if="value" v-clipboard="value">{{ value }}</a>`,
+						props: ['value'],
+						methods: {
+							copySuccess() {
+								this.$root.$refs.notice.success('Arvo kopioitu leikepöydälle');
+							},
+							copyError() {
+								this.$root.$refs.notice.danger('Arvoa ei voitu kopioida leikepöydälle');
+							}
+						},
+					},
+					'notice': {
+						inheritAttrs: false,
+						template: `<transition name="fade">
+							<div v-bind="$attrs" :class="containerClass" v-show="show">
+								<slot><i class="fa" :class="iconClass" v-if="iconClass"></i> {{ message }}</slot>
+							</div>
+						 </transition>`,
+						data () {
+							return {
+								containerClass: '',
+								iconClass: '',
+								message: '',
+								show: false,
+								timeout: null,
+							}
+						},
+						created () {
+							var vnode = this;
+
+							var icons = {
+								success: 'fa-thumbs-up',	
+								danger: 'fa-thumbs-down',
+								info: 'info-circle',
+								warning: 'exclamation-triangle',
+							};
+
+							_.each(['success', 'info', 'warning', 'danger'], mode => {
+								vnode[mode] = message => {
+									vnode.show = true;
+									vnode.message = message;
+									vnode.containerClass = 'alert-' + mode;
+									vnode.iconClass = icons[mode];
+
+									if (vnode.timeout) {
+										clearTimeout(vnode.timeout);
+									}
+
+									vnode.timeout = setTimeout(() => {
+										vnode.show = false;
+									}, 2e3);
+								};
+							});
+						}
+					},
 					'moment': {
 						props: ['date'],
-						template: '<span class="moment" v-if="moment && moment.isValid()">\
-							<div class="moment__date">{{ moment.format(\'DD.MM.YYYY\') }}</div>\
-							<div class="text-muted small moment__fromnow">{{ moment.fromNow() }}</div>\
-						</span>',
+						template: `<span class="moment" v-if="moment && moment.isValid()">
+							<div class="moment__date">{{ moment.format('DD.MM.YYYY') }}</div>
+							<div class="text-muted small moment__fromnow">{{ moment.fromNow() }}</div>
+						<span>`,
 						data: function () {
 							return {
 								moment: null,
 							}
 						},
 						watch: {
-							'date': function (val, oldval) {
+							date (val, oldval) {
 								if (val !== oldval) this.updateMoment(val);
 							}
 						},
 						methods: {
-							updateMoment: function (date) {
+							updateMoment (date) {
 								this.moment = moment(date, 'YYYYMMDD');
 
 								if (!this.moment.isValid()) {
@@ -118,17 +207,17 @@
 							}
 						},
 
-						beforeDestroy: function () {
+						beforeDestroy () {
 							this.moment = null;
 						},
-						mounted: function () {
+						mounted () {
 							this.updateMoment(this.date);
 						},
 					}
 				},
 				computed: {
-					responses: function () {
-						return _.map(this.raw_responses, function (response, key) {
+					responses () {
+						return _.map(this.raw_responses, (response, key) => {
 							var getError = _.partial(_.get, response.error, _);
 							var getData = _.partial(_.get, response.data, _);
 
@@ -151,31 +240,26 @@
 						});
 					}
 				},
-				mounted: function () {
-					var parent = this;
+				mounted () {
+					const parent = this;
+					const es = new EventSource('/event/responses');
 
-					var es = new EventSource('/event/responses');
-
-					es.addEventListener('add-response', function (event) {
+					es.addEventListener('add-response', event => {
 						var response = JSON.parse(event.data);
 						Vue.set(parent.raw_responses, response.key, response.value);
 						parent.$forceUpdate();
 					});
 
-					es.addEventListener('remove-response', function (event) {
+					es.addEventListener('remove-response', event => {
 						var response = JSON.parse(event.data);
 						Vue.delete(parent.raw_responses, response);
 						parent.$forceUpdate();
 					});
 
-					parent.$http.get('/data.json').then(function (resp) {
-						var body;
-
-						if (resp.ok) {
-							if (body = resp.body) {
-								parent.raw_responses = body.responses;
-								parent.class2text = body.class2text;
-							}
+					parent.$http.get('/data.json').then(({ ok, body }) => {
+						if (ok && body) {
+							parent.raw_responses = body.responses;
+							parent.class2text = body.class2text;
 						}
 
 						parent.loading = false;
