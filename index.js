@@ -40,25 +40,47 @@ function onResponse (file) {
 				const response = fs.readFileSync(filepath);
 
 				if (response) {
-					ResultsCollector.addOrUpdate(file, iconv.decode(response, 'latin1'));
+					const status = ResultsCollector.addOrUpdate(file, iconv.decode(response, 'latin1'));
 
 					if (emit) {
 						app.emit('response:add', {
+							success: Boolean(status),
 							value: ResultsCollector.parsed[file],
-							key: file,
+							old_key: status.replaced,
+							new_key: file,
 						});
+					}
+
+					if (status) {
+						if (status.replaced) {
+							log(`add: '${status.replaced}' replaced '${file}'\n`);
+						} else {
+							log(`add: '${file}'\n`);
+						}
 					}
 				}
 			}
 		},
 		remove (emit = false) {
-			ResultsCollector.remove(file);
+			const success = ResultsCollector.remove(file);
 
-			if (emit) {
-				app.emit('response:rm', file);
+			if (success) {
+				if (emit) {
+					app.emit('response:rm', {
+						success,
+						file,
+					});
+				}
+
+				log(`remove: ${file}\n`);
 			}
+			
 		}
 	}
+}
+
+function log (string) {
+	process.stdout.write(string);
 }
 
 const responsesPath = path.resolve('./responses');
@@ -73,8 +95,6 @@ watcher.on('all', (event, filepath) => {
 	const basename = path.basename(filepath);
 	const response = onResponse(basename);
 
-	console.log(event, basename);
-
 	switch (event) {
 		case 'add':
 		case 'change':
@@ -86,14 +106,12 @@ watcher.on('all', (event, filepath) => {
 	}
 });
 
-process.stdout.write(`preparing responses (${responses.length}) ... `);
+log(`preparing responses (${responses.length}) ...\n`);
 
 // initialize responses
-_.each(responses, file => {
-	onResponse(file).add();
-});
+_.each(responses, file => onResponse(file).add());
 
-process.stdout.write('done\n');
+log('done\n');
 
 app.use(bodyParser.raw({
 	type: 'text/xml',
@@ -172,10 +190,9 @@ app.get('/data.json', (req, res) => {
 
 app.get('/event/responses', sseExpress, (req, res) => {
 	app.on('response:add', data => {
-		res.sse('add-response', {
+		res.sse('add-response', _.assign(data, {
 			value: toResponseItem(data.value),
-			key: data.key,
-		});
+		}));
 	});
 
 	app.on('response:rm', data => {
@@ -193,4 +210,4 @@ const server = http.createServer(app);
 
 server.listen(PORT, HOST);
 
-process.stdout.write(`listening to ${HOST}:${PORT}\n`);
+log(`listening to ${HOST}:${PORT}\n`);

@@ -8,6 +8,21 @@
 			.container {
 				width: 100%;
 			}
+			
+			.notices {
+				background-color: #f0f0f0;
+				border: 1px solid #a0a0a0;
+				border-radius: 10px;
+				padding: 20px;
+				margin-top: 1em;
+				min-height: 1.5em;
+				max-height: 200px;
+				overflow: auto;
+			}
+
+			.notices .alert {
+				box-shadow: 5px 5px;
+			}
 
 			.VueTables .row {
 				margin: 1em 0;
@@ -56,7 +71,9 @@
 	<body>
 		<div class="container">
 			<div id="app" v-cloak>
-				<notice ref="notice" class="alert"></notice>
+				<notices ref="notices">
+					<notice ref="notice" class="alert"></notice>
+				</notices>
 
 				<v-client-table :data="responses" :columns="columns" :options="options">
 					<a slot="response_id" slot-scope="props" target="_blank" :href="'/xml/' + props.row.response_id">{{props.row.response_id}}</a>
@@ -99,6 +116,122 @@
 
 			Vue.use(vueClipboards);
 
+			Vue.component('clipboard', {
+				template: `<a class="copy-to-clipboard" @success="copySuccess" @error="copyError" v-if="value" v-clipboard="value">{{ value }}</a>`,
+				props: ['value'],
+				methods: {
+					copySuccess() {
+						this.$root.$refs.notice.success('Arvo kopioitu leikepöydälle');
+					},
+					copyError() {
+						this.$root.$refs.notice.danger('Arvoa ei voitu kopioida leikepöydälle');
+					}
+				},
+			});
+
+			Vue.component('notices', {
+				template: `<div class="notices" @mouseover.stop="$root.$emit('notice:clear_timeout')" @mouseout.stop="$root.$emit('notice:set_timeout')">
+					<slot></slot>
+					<template v-for="(notice, index) in notices" v-key="index">
+						<notice @notice:show="function (show) { !show && removeNotice(index); }" class="alert" :notice="notice"></notice>
+					</template>
+				</div>`,
+				data() {
+					return {
+						notices: [],
+					}
+				},
+				created() {
+					const vnode = this;
+
+					_.each(['success', 'info', 'warning', 'danger'], mode => {
+						vnode[mode] = message => {
+							vnode.addNotice(mode, message);
+						};
+					});
+				},
+				methods: {
+					addNotice (mode, message) {
+						this.notices.push({ message, mode });
+					},
+					removeNotice (index) {
+						this.notices.splice(index, 1);
+					}
+				}
+			});
+
+			Vue.component('notice', {
+				inheritAttrs: false,
+				template: `<transition name="fade">
+							<div v-bind="$attrs" :class="containerClass" v-show="show">
+								<slot><i class="fa" :class="iconClass" v-if="iconClass"></i> {{ message }}</slot>
+							</div>
+						 </transition>`,
+				props: ['notice'],
+				data() {
+					return {
+						containerClass: '',
+						iconClass: '',
+						message: '',
+						show: false,
+						timeout: null,
+					}
+				},
+				created() {
+					const vnode = this;
+
+					const icons = {
+						success: 'fa-thumbs-up',
+						danger: 'fa-thumbs-down',
+						info: 'fa-info-circle',
+						warning: 'fa-exclamation-triangle',
+					};
+
+					vnode.$on('notice:set_timeout', () => {
+						vnode.timeout = setTimeout(() => {
+							vnode.$emit('notice:show', false);
+							vnode.show = false;
+						}, 2e3);
+					});
+
+					vnode.$on('notice:clear_timeout', () => {
+						if (vnode.timeout) {
+							clearTimeout(vnode.timeout);
+						}
+					});
+
+					vnode.$root.$on('notice:clear_timeout', () => vnode.$emit('notice:clear_timeout'));
+					vnode.$root.$on('notice:set_timeout', () => vnode.$emit('notice:set_timeout'));
+
+					_.each(['success', 'info', 'warning', 'danger'], mode => {
+						vnode[mode] = message => {
+							vnode.containerClass = `alert-${mode}`;
+							vnode.iconClass = icons[mode];
+							vnode.message = message;
+							vnode.show = true;
+
+							vnode.$emit('notice:clear_timeout');
+							vnode.$emit('notice:set_timeout');
+						};
+					});
+				},
+				mounted () {
+					const vnode = this;
+					const { notice } = vnode;
+
+					if (notice) {
+						const method = _.get(vnode, notice.mode);
+
+						if (_.isFunction(method)) {
+							method.call(vnode, notice.message);
+						}
+					}					
+				},
+				beforeDestroy () {
+					this.$emit('notice:clear_timeout');
+				}
+			});
+			
 			new Vue({
 				el: '#app',
 				data: {
@@ -125,62 +258,6 @@
 					query: '', 
 				},
 				components: {
-					'clipboard': {
-						template: `<a class="copy-to-clipboard" @success="copySuccess" @error="copyError" v-if="value" v-clipboard="value">{{ value }}</a>`,
-						props: ['value'],
-						methods: {
-							copySuccess() {
-								this.$root.$refs.notice.success('Arvo kopioitu leikepöydälle');
-							},
-							copyError() {
-								this.$root.$refs.notice.danger('Arvoa ei voitu kopioida leikepöydälle');
-							}
-						},
-					},
-					'notice': {
-						inheritAttrs: false,
-						template: `<transition name="fade">
-							<div v-bind="$attrs" :class="containerClass" v-show="show">
-								<slot><i class="fa" :class="iconClass" v-if="iconClass"></i> {{ message }}</slot>
-							</div>
-						 </transition>`,
-						data () {
-							return {
-								containerClass: '',
-								iconClass: '',
-								message: '',
-								show: false,
-								timeout: null,
-							}
-						},
-						created () {
-							var vnode = this;
-
-							var icons = {
-								success: 'fa-thumbs-up',	
-								danger: 'fa-thumbs-down',
-								info: 'info-circle',
-								warning: 'exclamation-triangle',
-							};
-
-							_.each(['success', 'info', 'warning', 'danger'], mode => {
-								vnode[mode] = message => {
-									vnode.show = true;
-									vnode.message = message;
-									vnode.containerClass = 'alert-' + mode;
-									vnode.iconClass = icons[mode];
-
-									if (vnode.timeout) {
-										clearTimeout(vnode.timeout);
-									}
-
-									vnode.timeout = setTimeout(() => {
-										vnode.show = false;
-									}, 2e3);
-								};
-							});
-						}
-					},
 					'moment': {
 						props: ['date'],
 						template: `<span class="moment" v-if="moment && moment.isValid()">
@@ -242,18 +319,34 @@
 				},
 				mounted () {
 					const parent = this;
+					const { notices } = parent.$root.$refs;
+					
 					const es = new EventSource('/event/responses');
 
 					es.addEventListener('add-response', event => {
-						var response = JSON.parse(event.data);
-						Vue.set(parent.raw_responses, response.key, response.value);
-						parent.$forceUpdate();
+						const response = JSON.parse(event.data);
+
+						if (response.success) {
+							if (response.old_key) {
+								Vue.delete(parent.raw_responses, response.old_key);
+								notices.info(`Lisätty tiedosto '${response.new_key}' korvaa '${response.old_key}'.`);
+							} else {
+								notices.info(`Lisättiin tiedosto '${response.new_key}'.`);
+							}
+
+							Vue.set(parent.raw_responses, response.new_key, response.value);
+							parent.$forceUpdate();
+						}
 					});
 
 					es.addEventListener('remove-response', event => {
-						var response = JSON.parse(event.data);
-						Vue.delete(parent.raw_responses, response);
-						parent.$forceUpdate();
+						const response = JSON.parse(event.data);
+
+						if (response.success) {
+							notices.warning(`Poistettiin tiedosto '${response.file}'.`);
+							Vue.delete(parent.raw_responses, response.file);
+							parent.$forceUpdate();
+						}
 					});
 
 					parent.$http.get('/data.json').then(({ ok, body }) => {
