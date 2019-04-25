@@ -4,6 +4,8 @@ services:
     container_name: trafi-dummy-node
     image: nuc:5000/trafi-dummy-node
     build: .
+    environment:
+      - CHOKIDAR_USEPOLLING=1
     volumes:
       - .:/usr/src/app
     ports:
