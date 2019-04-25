@@ -61,10 +61,10 @@ function onResponse (file) {
 	}
 }
 
-const responsesPath = './responses';
+const responsesPath = path.resolve('./responses');
 
 const responses = fs.readdirSync(responsesPath);
-const watcher = chokidar.watch(responsesPath, {
+const watcher = chokidar.watch(`${responsesPath}/`, {
 	ignoreInitial: true,
 	persistent: true,
 });
