@@ -6,66 +6,92 @@ const _ = require('lodash');
 const parser = require('fast-xml-parser');;
 
 class ResultsCollector {
-	constructor () {
+	constructor(responses_path) {
+		this.responses_path = responses_path;
 		this.items = {};
 	}
 
-	get parsed () {
-		return _.mapValues(this.items, parser.parse);
+	get parsed() {
+		return _.mapValues(this.items, item => parser.parse(item.text));
 	};
 
-	addOrUpdate (file, text) {
+	addOrUpdate(file, text, last_modified, force_overwrite = false) {
 		const xml = parser.parse(text);
-		let value, key;
 
 		if (!xml) return false;
 
-		if (value = _.get(xml, `${AJONEUVONTIEDOT_LAAJA}.rekisteritunnus`)) {
-			if (key = _.findKey(this.parsed, [`${AJONEUVONTIEDOT_LAAJA}.rekisteritunnus`, value])) {
-				this.remove(key);
+		const add_new = () => {
+			this.items[file] = {
+				last_modified,
+				text
+			};
+		};
+		
+		const get_last_modified = old_file => {
+			return _.get(this.items, [old_file, 'last_modified']);
+		};
+		
+		const lookup_old_file_by_key = key => {
+			let found_value, old_file;
+
+			if (found_value = _.get(xml, key)) {
+				if (old_file = this.findKey(key, found_value)) {
+					return old_file;
+				}
 			}
-		} else if (value = _.get(xml, `${AJONEUVONTIEDOT_HISTORIA}.rekisteritunnus`)) {
-			if (key = _.findKey(this.parsed, [`${AJONEUVONTIEDOT_HISTORIA}.rekisteritunnus`, value])) {
-				this.remove(key);
-			}
-		} else if (value = _.get(xml, `${AJONEUVONTIEDOT_LAAJA}.valmistenumero`)) {
-			if (key = _.findKey(this.parsed, [`${AJONEUVONTIEDOT_LAAJA}.valmistenumero`, value])) {
-				this.remove(key);
-			}
-		} else if (value = _.get(xml, `${AJONEUVONTIEDOT_HISTORIA}.valmistenumero`)) {
-			if (key = _.findKey(this.parsed, [`${AJONEUVONTIEDOT_HISTORIA}.valmistenumero`, value])) {
-				this.remove(key);
-			}
+			
+			return false;
+		};
+
+		const old_file = (
+			lookup_old_file_by_key(`${AJONEUVONTIEDOT_LAAJA}.rekisteritunnus`) ||
+			lookup_old_file_by_key(`${AJONEUVONTIEDOT_HISTORIA}.rekisteritunnus`) ||
+			lookup_old_file_by_key(`${AJONEUVONTIEDOT_LAAJA}.valmistenumero`) ||
+			lookup_old_file_by_key(`${AJONEUVONTIEDOT_HISTORIA}.valmistenumero`)
+		);
+
+		if (!old_file) add_new();
+		else if (force_overwrite || get_last_modified(old_file) < last_modified) {
+			this.remove(old_file);
+			add_new();
 		}
 
-		this.items[file] = text;
-
-		return { replaced: key };
+		return {
+			replaced: old_file
+		};
 	};
 
-	remove (file) {
+	findKey (path, value) {
+		return _.findKey(this.parsed, [path, value]);
+	};
+	
+	getParsed (file) {
+		return _.get(this.parsed, file);
+	};
+	
+	remove(file) {
 		return delete this.items[file];
 	};
 
-	getByReg (value, raw = true) {
-		let index = _.findKey(this.parsed, [`${AJONEUVONTIEDOT_LAAJA}.rekisteritunnus`, value]);
+	getByReg(value, raw = true) {
+		let index = this.findKey(`${AJONEUVONTIEDOT_LAAJA}.rekisteritunnus`, value);
 
 		if (_.isUndefined(index)) {
-			index = _.findKey(this.parsed, [`${AJONEUVONTIEDOT_HISTORIA}.rekisteritunnus`, value]);
+			index = this.findKey(`${AJONEUVONTIEDOT_HISTORIA}.rekisteritunnus`, value);
 		}
 
 		return raw ? this.items[index] : this.parsed[index];
 	};
 
-	getByVin (value, raw = true) {
-		let index = _.findKey(this.parsed, [`${AJONEUVONTIEDOT_LAAJA}.valmistenumero`, value]);
+	getByVin(value, raw = true) {
+		let index = this.findKey(`${AJONEUVONTIEDOT_LAAJA}.valmistenumero`, value);
 
 		if (_.isUndefined(index)) {
-			index = _.findKey(this.parsed, [`${AJONEUVONTIEDOT_HISTORIA}.valmistenumero`, value]);
+			index = this.findKey(`${AJONEUVONTIEDOT_HISTORIA}.valmistenumero`, value);
 		}
 
 		return raw ? this.items[index] : this.parsed[index];
 	};
 }
 
-module.exports = new ResultsCollector;
+module.exports = ResultsCollector;

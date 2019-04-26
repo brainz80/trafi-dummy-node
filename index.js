@@ -15,7 +15,8 @@ const PORT = 8080;
 
 const ResultsCollector = require('./src/ResultsCollector.js');
 
-const noResponse = `<?xml version="1.0" encoding="ISO-8859-1"?>
+const RESPONSE_PATH = path.resolve('./responses');
+const NO_RESPONSE = `<?xml version="1.0" encoding="ISO-8859-1"?>
 <kehys>
 	<yleinen>
 		<sanomatyyppi>VIRHE</sanomatyyppi>
@@ -28,24 +29,32 @@ const noResponse = `<?xml version="1.0" encoding="ISO-8859-1"?>
 	<sanoma></sanoma>
 </kehys>`;
 
+const resultsCollector = new ResultsCollector(RESPONSE_PATH);
 const app = express();
 
 function onResponse (file) {
-	const filepath = path.join(responsesPath, file);
+	const filepath = path.join(RESPONSE_PATH, file);
 	const exist = fs.existsSync(filepath);
 
 	return {
-		add (emit = false) {
+		add (watcher = false) {
 			if (exist) {
 				const response = fs.readFileSync(filepath);
 
 				if (response) {
-					const status = ResultsCollector.addOrUpdate(file, iconv.decode(response, 'latin1'));
+					const { ctimeMs, mtimeMs } = fs.statSync(filepath);
 
-					if (emit) {
+					const status = resultsCollector.addOrUpdate(
+						file,
+						iconv.decode(response, 'latin1'),
+						Math.max(ctimeMs, mtimeMs),
+						watcher
+					);
+
+					if (watcher) {
 						app.emit('response:add', {
 							success: Boolean(status),
-							value: ResultsCollector.parsed[file],
+							value: resultsCollector.parsed[file],
 							old_key: status.replaced,
 							new_key: file,
 						});
@@ -61,11 +70,11 @@ function onResponse (file) {
 				}
 			}
 		},
-		remove (emit = false) {
-			const success = ResultsCollector.remove(file);
+		remove (watcher = false) {
+			const success = resultsCollector.remove(file);
 
 			if (success) {
-				if (emit) {
+				if (watcher) {
 					app.emit('response:rm', {
 						success,
 						file,
@@ -74,7 +83,6 @@ function onResponse (file) {
 
 				log(`remove: ${file}\n`);
 			}
-			
 		}
 	}
 }
@@ -83,10 +91,8 @@ function log (string) {
 	process.stdout.write(string);
 }
 
-const responsesPath = path.resolve('./responses');
-
-const responses = fs.readdirSync(responsesPath);
-const watcher = chokidar.watch(`${responsesPath}/`, {
+const responses = fs.readdirSync(RESPONSE_PATH);
+const watcher = chokidar.watch(`${RESPONSE_PATH}/`, {
 	ignoreInitial: true,
 	persistent: true,
 });
@@ -141,12 +147,12 @@ function getResponse (req, res) {
 
 				res.set('Content-Type', 'application/xml');
 
-				if (response = ResultsCollector.getByReg(reg)) {
+				if (response = resultsCollector.getByReg(reg)) {
 					res.end(response);
-				} else if (response = ResultsCollector.getByVin(vin)) {
+				} else if (response = resultsCollector.getByVin(vin)) {
 					res.end(response);
 				} else {
-					res.end(noResponse);
+					res.end(NO_RESPONSE);
 				}
 			}
 		} else {
@@ -160,9 +166,11 @@ function getResponse (req, res) {
 }
 
 function toResponseItem (response) {
-	const historia = _.get(response, 'kehys.sanoma.ajoneuvontiedot.historia');
-	const laaja = _.get(response, 'kehys.sanoma.ajoneuvontiedot.laaja');
-	const virhe = _.get(response, 'kehys.yleinen.virhe');
+	const getFromResponse = _.partial(_.get, response, _);
+	
+	const historia = getFromResponse('kehys.sanoma.ajoneuvontiedot.historia');
+	const laaja = getFromResponse('kehys.sanoma.ajoneuvontiedot.laaja');
+	const virhe = getFromResponse('kehys.yleinen.virhe');
 
 	return {
 		error: virhe,
@@ -174,7 +182,7 @@ function toResponseItem (response) {
 app.get('/xml/:name', (req, res) => {
 	res.sendFile(req.params.name, {
 		dotfiles: 'deny',
-		root: responsesPath,
+		root: RESPONSE_PATH,
 		headers: {
 			'Content-Type': 'application/xml; charset=ISO-8859-1',
 		}
@@ -183,16 +191,17 @@ app.get('/xml/:name', (req, res) => {
 
 app.get('/data.json', (req, res) => {
 	res.send({
-		responses: _.mapValues(ResultsCollector.parsed, toResponseItem),
+		responses: _.mapValues(resultsCollector.parsed, toResponseItem),
 		class2text: require('./src/class2text.js'),
 	});
 });
 
 app.get('/event/responses', sseExpress, (req, res) => {
 	app.on('response:add', data => {
-		res.sse('add-response', _.assign(data, {
-			value: toResponseItem(data.value),
-		}));
+		const output = _.clone(data);
+
+		output.value = toResponseItem(output.value);
+		res.sse('add-response', output);
 	});
 
 	app.on('response:rm', data => {
