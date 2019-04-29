@@ -80,7 +80,7 @@ class ResultsCollector {
 			index = this.findKey(`${AJONEUVONTIEDOT_HISTORIA}.rekisteritunnus`, value);
 		}
 
-		return raw ? this.items[index] : this.parsed[index];
+		return raw ? _.get(this.items, [index, 'text']) : this.parsed[index];
 	};
 
 	getByVin(value, raw = true) {
@@ -90,7 +90,7 @@ class ResultsCollector {
 			index = this.findKey(`${AJONEUVONTIEDOT_HISTORIA}.valmistenumero`, value);
 		}
 
-		return raw ? this.items[index] : this.parsed[index];
+		return raw ? _.get(this.items, [index, 'text']) : this.parsed[index];
 	};
 }
 
