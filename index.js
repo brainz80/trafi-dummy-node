@@ -189,6 +189,9 @@ app.get('/xml/:name', (req, res) => {
 	res.sendFile(req.params.name, {
 		dotfiles: 'deny',
 		root: RESPONSE_PATH,
+		headers: {
+			'Content-Type': 'application/xml; charset=ISO-8859-1',
+		}
 	});
 });
 
