@@ -120,7 +120,10 @@ _.each(responses, file => onResponse(file).add());
 log('done\n');
 
 app.use(bodyParser.raw({
-	type: 'text/xml',
+	type: [
+		'application/xml',
+		'text/xml'
+	],
 	inflate: true,
 	limit: '100kb',
 }));
@@ -141,19 +144,21 @@ function getResponse (req, res) {
 			const hakutiedot = _.get(json, 'kehys.sanoma.ajoneuvonHakuehdot');
 
 			if (hakutiedot) {
-				const reg = hakutiedot.rekisteritunnus;
-				const vin = hakutiedot.valmistenumero;
-				let response;
+				res.set('Content-Type', 'application/xml; charset=ISO-8859-1');
+				
+				new Promise(resolve => {
+					let response;
 
-				res.set('Content-Type', 'application/xml');
-
-				if (response = resultsCollector.getByReg(reg)) {
-					res.end(response);
-				} else if (response = resultsCollector.getByVin(vin)) {
-					res.end(response);
-				} else {
-					res.end(NO_RESPONSE);
-				}
+					if (response = resultsCollector.getByReg(hakutiedot.rekisteritunnus)) {
+						resolve(response);
+					} else if (response = resultsCollector.getByVin(hakutiedot.valmistenumero)) {
+						resolve(response);
+					} else {
+						resolve(NO_RESPONSE);
+					}
+				}).then(response => {
+					res.end(response, 'latin1');
+				});
 			}
 		} else {
 			process.stderr.write(`${req.ip} parse failed.\n`);
@@ -180,12 +185,10 @@ function toResponseItem (response) {
 }
 
 app.get('/xml/:name', (req, res) => {
+	res.charset = 'ISO-8859-1';
 	res.sendFile(req.params.name, {
 		dotfiles: 'deny',
 		root: RESPONSE_PATH,
-		headers: {
-			'Content-Type': 'application/xml; charset=ISO-8859-1',
-		}
 	});
 });
 
