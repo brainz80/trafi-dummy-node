@@ -10,11 +10,11 @@
   "license": "ISC",
   "dependencies": {
     "body-parser": "^1.19.0",
-    "chokidar": "^3.0.0",
+    "chokidar": "^3.0.2",
     "express": "^4.17.1",
-    "fast-xml-parser": "^3.12.16",
-    "iconv-lite": "^0.4.24",
-    "lodash": "^4.17.11",
+    "fast-xml-parser": "^3.12.17",
+    "iconv-lite": "^0.5.0",
+    "lodash": "^4.17.14",
     "sse-express": "^1.0.2"
   }
 }
