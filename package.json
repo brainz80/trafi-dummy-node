@@ -12,9 +12,9 @@
     "body-parser": "^1.19.0",
     "chokidar": "^3.0.2",
     "express": "^4.17.1",
-    "fast-xml-parser": "^3.12.17",
+    "fast-xml-parser": "^3.12.19",
     "iconv-lite": "^0.5.0",
-    "lodash": "^4.17.14",
+    "lodash": "^4.17.15",
     "sse-express": "^1.0.2"
   }
 }
