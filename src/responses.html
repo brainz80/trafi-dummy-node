@@ -111,14 +111,14 @@
 			Vue.use(VueTables.ClientTable, {
 				footerHeadings: true,
 				sortIcon: {
-					'base'				: 'fa',
-					'up'				: 'fa-sort-up',
-					'down'				: 'fa-sort-down',
-					'is'				: 'fa-sort'
+					'base'	: 'fa',
+					'up'	: 'fa-sort-up',
+					'down'	: 'fa-sort-down',
+					'is'	: 'fa-sort'
 				},
 			}, false, 'bootstrap3');
 
-			Vue.use(vueClipboards);
+			Vue.use(vueClipboards.default);
 
 			Vue.component('clipboard', {
 				template: `<a class="copy-to-clipboard" @success="copySuccess" @error="copyError" v-if="value" v-clipboard="value">{{ value }}</a>`,
