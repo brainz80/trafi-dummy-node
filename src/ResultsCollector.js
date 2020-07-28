@@ -46,6 +46,8 @@ class ResultsCollector {
 		const old_file = (
 			lookup_old_file_by_key(`${AJONEUVONTIEDOT_LAAJA}.rekisteritunnus`) ||
 			lookup_old_file_by_key(`${AJONEUVONTIEDOT_HISTORIA}.rekisteritunnus`) ||
+			lookup_old_file_by_key(`${AJONEUVONTIEDOT_LAAJA}.edellinenRekisteritunnus`) ||
+			lookup_old_file_by_key(`${AJONEUVONTIEDOT_HISTORIA}.edellinenRekisteritunnus`) ||
 			lookup_old_file_by_key(`${AJONEUVONTIEDOT_LAAJA}.valmistenumero`) ||
 			lookup_old_file_by_key(`${AJONEUVONTIEDOT_HISTORIA}.valmistenumero`)
 		);
@@ -77,7 +79,13 @@ class ResultsCollector {
 		let index = this.findKey(`${AJONEUVONTIEDOT_LAAJA}.rekisteritunnus`, value);
 
 		if (_.isUndefined(index)) {
+			index = this.findKey(`${AJONEUVONTIEDOT_LAAJA}.edellinenRekisteritunnus`, value);
+		}
+		if (_.isUndefined(index)) {
 			index = this.findKey(`${AJONEUVONTIEDOT_HISTORIA}.rekisteritunnus`, value);
+		}
+		if (_.isUndefined(index)) {
+			index = this.findKey(`${AJONEUVONTIEDOT_HISTORIA}.edellinenRekisteritunnus`, value);
 		}
 
 		return raw ? _.get(this.items, [index, 'text']) : this.parsed[index];
