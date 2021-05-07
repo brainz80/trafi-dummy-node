@@ -14,7 +14,7 @@
     "express": "^4.17.1",
     "fast-xml-parser": "^3.17.4",
     "iconv-lite": "^0.6.2",
-    "lodash": "^4.17.19",
+    "lodash": "^4.17.21",
     "sse-express": "^1.0.2"
   }
 }
