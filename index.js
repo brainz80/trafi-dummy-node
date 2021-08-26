@@ -119,6 +119,7 @@ _.each(responses, file => onResponse(file).add());
 
 log('done\n');
 
+// NOTE: bodyParser constuctor is deprecated
 app.use(bodyParser.raw({
 	type: [
 		'application/xml',
